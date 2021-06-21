@@ -8,7 +8,8 @@ We are hear to help. Please ask questions and talk us through your thought proce
 
 ## Constraints
 - Use a node.js framework of your choice (we use fastify).
-- Use git version control
+- Use a database of your choice (any model).
+- Use git version control.
 - Write Unit tests etc where appropriate.
 
 ## Requirements
