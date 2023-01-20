@@ -4,7 +4,7 @@ In our system we have a feature where discounts become available to a user based
 
 We would like you to create an API that gives access to a basic shopping cart and discounts that can be applied to the cart.
 
-We are hear to help. Please ask questions and talk us through your thought process.
+We are here to help. Please ask questions and talk us through your thought process.
 
 ## Constraints
 - Use a node.js framework of your choice (we use fastify).
