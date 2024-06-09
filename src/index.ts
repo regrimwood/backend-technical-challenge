@@ -15,7 +15,7 @@ async function dbConnect(server: FastifyInstance) {
       port: 1433,
       user: process.env.MSSQL_USER,
       password: process.env.MSSQL_PASSWORD,
-      database: "iticket",
+      database: "master",
     });
 
     console.log("Connected to database");

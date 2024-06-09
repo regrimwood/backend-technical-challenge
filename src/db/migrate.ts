@@ -11,7 +11,14 @@ const sqlConfig = {
   database: "master",
   server: "localhost",
   options: {
-    trustServerCertificate: true, // for dev
+    encrypt: false,
+    trustServerCertificate: true,
+  },
+  requestTimeout: 15000,
+  connectionTimeout: 15000,
+  pool: {
+    max: 1,
+    min: 1,
   },
 };
 
@@ -23,20 +30,18 @@ export default async function migrate() {
       driver: "mssql",
       migrationPattern: __dirname + "/migrations/*",
       database: "master",
-      schemaTable: "schemaversion",
-      currentSchema: "public",
       execQuery: (query: string) => {
         return pool
           .request()
           .query(query)
-          .then((result) => ({ rows: result.recordset }));
+          .then((result) => ({ rows: result?.recordset ?? result }));
       },
     });
 
     const result = await postgrator.migrate();
 
     if (result.length === 0) {
-      console.log("No migrations found.");
+      console.log("No new migrations found.");
     }
 
     console.log("Migration done.");
