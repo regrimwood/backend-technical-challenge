@@ -14,6 +14,7 @@
   "author": "regrimwood",
   "license": "ISC",
   "dependencies": {
+    "@fastify/secure-session": "^7.5.1",
     "@fastify/type-provider-json-schema-to-ts": "^3.0.0",
     "@types/mssql": "^9.1.5",
     "dotenv": "^16.4.5",

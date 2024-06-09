@@ -1,10 +1,21 @@
 import "dotenv/config";
+import fs from "fs";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 import fastify, { FastifyInstance } from "fastify";
-import { JsonSchemaToTsProvider } from "@fastify/type-provider-json-schema-to-ts";
+import secureSession from "@fastify/secure-session";
 import mssql from "fastify-mssql";
 import migrate from "./db/migrate.js";
 
-const server = fastify().withTypeProvider<JsonSchemaToTsProvider>();
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+declare module "@fastify/secure-session" {
+  interface SessionData {
+    data: string;
+  }
+}
+
+const server = fastify();
 
 async function dbConnect(server: FastifyInstance) {
   migrate();
@@ -27,9 +38,25 @@ async function dbConnect(server: FastifyInstance) {
 
 server.register(dbConnect);
 
+server.register(secureSession, {
+  sessionName: "session",
+  cookieName: "session-cookie",
+  key: fs.readFileSync(__dirname + "/secret-key"),
+  cookie: {
+    path: "/",
+  },
+});
+
+server.addHook("preHandler", async (request, reply) => {
+  const data = request.session.get("data");
+  if (!data) {
+    request.session.set("data", "hello");
+  }
+});
+
 async function apiRoutes(server: FastifyInstance) {
   server.get("/ping", async (request, reply) => {
-    return "pong\n";
+    return request.session.get("data");
   });
 }
 
