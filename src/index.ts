@@ -1,19 +1,28 @@
+import "dotenv/config";
 import fastify, { FastifyInstance } from "fastify";
 import { JsonSchemaToTsProvider } from "@fastify/type-provider-json-schema-to-ts";
 import mssql from "fastify-mssql";
+import migrate from "./db/migrate.js";
 
 const server = fastify().withTypeProvider<JsonSchemaToTsProvider>();
 
 async function dbConnect(server: FastifyInstance) {
-  server.register(mssql, {
-    server: "localhost",
-    port: 1433,
-    user: "root",
-    password: "root",
-    database: "iticket",
-  });
+  migrate();
 
-  console.log("Connected to database");
+  try {
+    server.register(mssql, {
+      server: "localhost",
+      port: 1433,
+      user: process.env.MSSQL_USER,
+      password: process.env.MSSQL_PASSWORD,
+      database: "iticket",
+    });
+
+    console.log("Connected to database");
+  } catch (error) {
+    console.error("Error connecting to database", error);
+    process.exit(1);
+  }
 }
 
 server.register(dbConnect);
