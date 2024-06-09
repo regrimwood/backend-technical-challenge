@@ -41,7 +41,7 @@ server.register(dbConnect);
 server.register(secureSession, {
   sessionName: "session",
   cookieName: "session-cookie",
-  key: fs.readFileSync(__dirname + "/secret-key"),
+  key: fs.readFileSync(__dirname + "/session-key"),
   cookie: {
     path: "/",
   },
