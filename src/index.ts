@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import fastify, { FastifyInstance } from "fastify";
 import secureSession from "@fastify/secure-session";
 import mssql from "fastify-mssql";
-import migrate from "./db/migrate.js";
+import migrate from "../db/migrate";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -56,7 +56,7 @@ server.addHook("preHandler", async (request, reply) => {
 
 async function apiRoutes(server: FastifyInstance) {
   server.get("/ping", async (request, reply) => {
-    return request.session.get("data");
+    return { message: "pong" };
   });
 }
 
