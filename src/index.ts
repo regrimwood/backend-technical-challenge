@@ -11,7 +11,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 declare module "@fastify/secure-session" {
   interface SessionData {
-    data: string;
+    cart: {
+      items: {
+        ticketTypeId: number;
+        quantity: number;
+      }[];
+    };
   }
 }
 
@@ -50,13 +55,17 @@ server.register(secureSession, {
 server.addHook("preHandler", async (request, reply) => {
   const data = request.session.get("data");
   if (!data) {
-    request.session.set("data", "hello");
+    request.session.set("cart", { items: [] });
   }
 });
 
 async function apiRoutes(server: FastifyInstance) {
   server.get("/ping", async (request, reply) => {
     return { message: "pong" };
+  });
+
+  server.get("/cart", async (request, reply) => {
+    return request.session.get("cart");
   });
 }
 
