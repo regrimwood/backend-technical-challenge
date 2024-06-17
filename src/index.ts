@@ -7,7 +7,7 @@ import secureSession from "@fastify/secure-session";
 import dbConnect from "./db";
 import cartRoutes from "./cart/cartRoutes";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import { CartType } from "./cart/cartType";
+import { CartType } from "./utils/types/cartType";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

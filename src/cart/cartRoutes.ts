@@ -1,9 +1,11 @@
 import { FastifyInstance } from "fastify";
-import { CartType } from "./cartType";
-import { ErrorType } from "../errorType";
+import { CartType } from "../utils/types/cartType";
+import { ErrorType } from "../utils/types/errorType";
 import { getDiscounts } from "./cartRepository";
+import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
 
 export default async function cartRoutes(server: FastifyInstance) {
+  // get the cart
   server.get<{ Reply: CartType }>("/", async (request, reply) => {
     const cart = request.session.get("cart");
     if (!cart) {
@@ -22,14 +24,38 @@ export default async function cartRoutes(server: FastifyInstance) {
     }
   );
 
+  // get valid discounts
   server.get("/available-discounts", async (request, reply) => {
     const cart = request.session.get("cart");
+
     if (!cart) {
       return reply.status(200).send([]);
     }
 
-    const discounts = await getDiscounts(cart.items, server);
+    const priceQuantities = new Map<number, number>();
 
-    reply.status(200).send(discounts);
+    cart.items.forEach((item) => {
+      const existingQuantity = priceQuantities.get(item.priceId);
+      if (existingQuantity) {
+        priceQuantities.set(item.priceId, existingQuantity + item.quantity);
+      } else {
+        priceQuantities.set(item.priceId, item.quantity);
+      }
+    });
+
+    const priceIds = Array.from(priceQuantities.keys());
+
+    const discounts = await getDiscounts(priceIds, server);
+
+    if ("error" in discounts || !discounts) {
+      return reply.status(500).send({ message: discounts.error });
+    }
+
+    const validDiscounts = calculateAvailableDiscounts(
+      priceQuantities,
+      discounts
+    );
+
+    reply.status(200).send(validDiscounts);
   });
 }

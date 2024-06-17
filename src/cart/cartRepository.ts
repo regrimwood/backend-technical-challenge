@@ -1,21 +1,29 @@
 import { FastifyInstance } from "fastify";
-import { CartType } from "./cartType";
 import MSSql from "mssql";
+import { DiscountType } from "../utils/types/discountType";
 
-export const getDiscounts = async (cart: CartType, server: FastifyInstance) => {
+export const getDiscounts = async (
+  priceIds: number[],
+  server: FastifyInstance
+) => {
   try {
-    const discounts = [];
+    const discounts: DiscountType = [];
 
-    for (const item of cart) {
+    for (const priceId of priceIds) {
       const pool = await server.mssql.pool.connect();
-      const query = "SELECT * FROM discount_items WHERE price_id = @priceId";
+      const query = `
+        SELECT di.*, d.* 
+        FROM discount_items di 
+        JOIN discounts d ON di.discount_id = d.id
+        WHERE di.price_id = @priceId
+      `;
 
       const res = await pool
         .request()
-        .input("priceId", MSSql.Int, item.priceId)
+        .input("priceId", MSSql.Int, priceId)
         .query(query);
 
-      discounts.push(res.recordset);
+      discounts.push(...res.recordset);
     }
 
     return discounts;
