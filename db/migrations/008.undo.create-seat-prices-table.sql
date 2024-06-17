@@ -1,0 +1,1 @@
+DROP TABLE allocated_seats_prices;

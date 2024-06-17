@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS discounts;
+DROP TABLE discounts;

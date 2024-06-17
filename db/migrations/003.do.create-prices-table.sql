@@ -1,0 +1,7 @@
+CREATE TABLE prices(
+    id INT PRIMARY KEY IDENTITY(1,1),
+    eventId INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    type NVARCHAR(255) NOT NULL,
+    FOREIGN KEY (eventId) REFERENCES events(id)
+)
