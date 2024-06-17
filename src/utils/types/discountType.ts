@@ -7,8 +7,8 @@ export const DiscountType = Type.Array(
     min_quantity: Type.Number(),
     max_quantity: Type.Number(),
     name: Type.String(),
-    percentDiscount: Type.Number() || Type.Null(),
-    fixedPrice: Type.Number() || Type.Null(),
+    percentDiscount: Type.Optional(Type.Number()),
+    fixedPrice: Type.Optional(Type.Number()),
   })
 );
 
@@ -18,8 +18,8 @@ export const DiscountWithItemsType = Type.Array(
   Type.Object({
     discountId: Type.Number(),
     name: Type.String(),
-    percentDiscount: Type.Number() || Type.Null(),
-    fixedPrice: Type.Number() || Type.Null(),
+    percentDiscount: Type.Optional(Type.Number()),
+    fixedPrice: Type.Optional(Type.Number()),
     items: Type.Array(
       Type.Object({
         priceId: Type.Number(),
