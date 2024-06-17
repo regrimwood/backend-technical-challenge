@@ -15,8 +15,8 @@ export const getDiscountsByPriceIds = async (
         SELECT
             d.id,
             d.name,
-            d.percentDiscount,
-            d.fixedPrice,
+            d.percent_discount AS percentDiscount,
+            d.fixed_price AS fixedPrice,
             (
                 SELECT
                     di.price_id AS priceId,
@@ -41,8 +41,8 @@ export const getDiscountsByPriceIds = async (
         GROUP BY
             d.id,
             d.name,
-            d.percentDiscount,
-            d.fixedPrice;
+            d.percent_discount,
+            d.fixed_price;
       `;
 
       const res = await pool
