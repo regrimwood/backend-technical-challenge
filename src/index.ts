@@ -2,12 +2,12 @@ import "dotenv/config";
 import fs from "fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import fastify from "fastify";
+import Fastify from "fastify";
 import secureSession from "@fastify/secure-session";
 import dbConnect from "./db";
-import cartRoutes from "./cart/cart-routes";
+import cartRoutes from "./cart/cartRoutes";
 import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
-import { CartType } from "./cart/cart-types";
+import { CartType } from "./cart/cartType";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -19,9 +19,9 @@ declare module "@fastify/secure-session" {
   }
 }
 
-const server = fastify().withTypeProvider<TypeBoxTypeProvider>();
+const server = Fastify().withTypeProvider<TypeBoxTypeProvider>();
 
-server.register(dbConnect);
+dbConnect(server);
 
 server.register(secureSession, {
   sessionName: "session",
@@ -33,8 +33,9 @@ server.register(secureSession, {
 });
 
 server.addHook("preHandler", async (request, reply) => {
-  const data = request.session.get("data");
-  if (!data) {
+  const cart = request.session.get("cart");
+
+  if (!cart) {
     request.session.set("cart", { items: [] });
   }
 });
