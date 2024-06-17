@@ -9,8 +9,8 @@ export const Discount = Type.Array(
     items: Type.Array(
       Type.Object({
         priceId: Type.Number(),
-        minQuantity: Type.Number(),
-        maxQuantity: Type.Number(),
+        minQuantity: Type.Optional(Type.Number()),
+        maxQuantity: Type.Optional(Type.Number()),
       })
     ),
   })
