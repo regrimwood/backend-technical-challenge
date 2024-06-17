@@ -1,4 +1,4 @@
-DELETE FROM discount_requirements WHERE *;
+DELETE FROM discount_items WHERE *;
 
 DELETE FROM discounts WHERE *;
 

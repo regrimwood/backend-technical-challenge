@@ -1,4 +1,4 @@
-CREATE TABLE discount_requirements (
+CREATE TABLE discount_items (
     id INT PRIMARY KEY IDENTITY(1,1),
     discount_id INT NOT NULL,
     price_id INT NOT NULL,

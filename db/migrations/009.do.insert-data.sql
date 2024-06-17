@@ -166,12 +166,12 @@ VALUES
 
 SET IDENTITY_INSERT discounts OFF;
 
-SET IDENTITY_INSERT discount_requirements ON;
+SET IDENTITY_INSERT discount_items ON;
 
-INSERT INTO discount_requirements (id, discount_id, price_id, min_quantity, max_quantity)
+INSERT INTO discount_items (id, discount_id, price_id, min_quantity, max_quantity)
 VALUES
 (1, 1, 1, 4, null),
 (2, 2, 1, 2, 2),
 (3, 2, 2, 2, 3);
 
-SET IDENTITY_INSERT discount_requirements OFF;
+SET IDENTITY_INSERT discount_items OFF;
