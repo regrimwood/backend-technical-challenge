@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import MSSql from "mssql";
 import { DiscountType } from "../utils/types/discountType";
 
-export const getDiscounts = async (
+export const getDiscountsByPriceIds = async (
   priceIds: number[],
   server: FastifyInstance
 ) => {
@@ -12,10 +12,37 @@ export const getDiscounts = async (
     for (const priceId of priceIds) {
       const pool = await server.mssql.pool.connect();
       const query = `
-        SELECT di.*, d.* 
-        FROM discount_items di 
-        JOIN discounts d ON di.discount_id = d.id
-        WHERE di.price_id = @priceId
+        SELECT
+            d.id,
+            d.name,
+            d.percent_discount AS percentDiscount,
+            d.fixed_price AS fixedPrice,
+            (
+                SELECT
+                    di.price_id AS priceId,
+                    di.min_quantity AS minQuantity,
+                    di.max_quantity AS maxQuantity
+                FROM
+                    discount_items di
+                WHERE
+                    di.discount_id = d.id
+                    AND di.price_id = @priceId
+                FOR JSON PATH
+            ) AS items
+        FROM
+            discounts d
+        WHERE
+            EXISTS (
+                SELECT 1
+                FROM discount_items di
+                WHERE di.discount_id = d.id
+                AND di.price_id = @priceId
+            )
+        GROUP BY
+            d.id,
+            d.name,
+            d.percent_discount,
+            d.fixed_price;
       `;
 
       const res = await pool
@@ -23,7 +50,17 @@ export const getDiscounts = async (
         .input("priceId", MSSql.Int, priceId)
         .query(query);
 
-      discounts.push(...res.recordset);
+      for (const record of res.recordset) {
+        if (!discounts.find((d) => d.id === record.id)) {
+          discounts.push({
+            id: record.id,
+            name: record.name,
+            percentDiscount: record.percentDiscount,
+            fixedPrice: record.fixedPrice,
+            items: JSON.parse(record.items),
+          });
+        }
+      }
     }
 
     return discounts;

@@ -156,11 +156,11 @@ VALUES
 
 SET IDENTITY_INSERT discounts ON;
 
-INSERT INTO discounts (id, name, percentDiscount)
+INSERT INTO discounts (id, name, percent_discount)
 VALUES
 (1, 'Group Discount', 10);
 
-INSERT INTO discounts (id, name, fixedPrice)
+INSERT INTO discounts (id, name, fixed_price)
 VALUES
 (2, 'Family Discount', 70);
 
