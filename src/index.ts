@@ -2,24 +2,24 @@ import "dotenv/config";
 import fs from "fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
-import fastify, { FastifyInstance } from "fastify";
+import fastify from "fastify";
 import secureSession from "@fastify/secure-session";
 import dbConnect from "./db";
+import cartRoutes from "./cart/cart-routes";
+import { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
+import { CartType } from "./cart/cart-types";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 declare module "@fastify/secure-session" {
   interface SessionData {
     cart: {
-      items: {
-        ticketTypeId: number;
-        quantity: number;
-      }[];
+      items: CartType;
     };
   }
 }
 
-const server = fastify();
+const server = fastify().withTypeProvider<TypeBoxTypeProvider>();
 
 server.register(dbConnect);
 
@@ -39,17 +39,12 @@ server.addHook("preHandler", async (request, reply) => {
   }
 });
 
-async function apiRoutes(server: FastifyInstance) {
-  server.get("/ping", async (request, reply) => {
-    return { message: "pong" };
-  });
+// test
+server.get("/ping", async (request, reply) => {
+  return { message: "pong" };
+});
 
-  server.get("/cart", async (request, reply) => {
-    return request.session.get("cart");
-  });
-}
-
-server.register(apiRoutes, { prefix: "/api" });
+server.register(cartRoutes, { prefix: "/cart" });
 
 server.listen({ port: 8080 }, (err, address) => {
   if (err) {
