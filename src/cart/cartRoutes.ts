@@ -3,7 +3,7 @@ import addFormats from "ajv-formats";
 import Ajv from "ajv";
 import { Cart, CartType } from "../utils/types/cartType";
 import { ErrorType } from "../utils/types/errorType";
-import { getDiscounts } from "./cartRepository";
+import { getDiscountsByPriceIds } from "./cartRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
 
 const ajv = addFormats(new Ajv({}), [
@@ -72,7 +72,7 @@ export default async function cartRoutes(server: FastifyInstance) {
 
     const priceIds = Array.from(priceQuantities.keys());
 
-    const discounts = await getDiscounts(priceIds, server);
+    const discounts = await getDiscountsByPriceIds(priceIds, server);
 
     if ("error" in discounts || !discounts) {
       return reply.status(500).send({ message: discounts.error });
