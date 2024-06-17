@@ -1,8 +1,29 @@
 import { FastifyInstance } from "fastify";
-import { CartType } from "../utils/types/cartType";
+import addFormats from "ajv-formats";
+import Ajv from "ajv";
+import { Cart, CartType } from "../utils/types/cartType";
 import { ErrorType } from "../utils/types/errorType";
 import { getDiscounts } from "./cartRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
+
+const ajv = addFormats(new Ajv({}), [
+  "date-time",
+  "time",
+  "date",
+  "email",
+  "hostname",
+  "ipv4",
+  "ipv6",
+  "uri",
+  "uri-reference",
+  "uuid",
+  "uri-template",
+  "json-pointer",
+  "relative-json-pointer",
+  "regex",
+]);
+
+const validateCart = ajv.compile(Cart);
 
 export default async function cartRoutes(server: FastifyInstance) {
   // get the cart
@@ -15,10 +36,16 @@ export default async function cartRoutes(server: FastifyInstance) {
   });
 
   // edit the cart
-  server.post<{ Body: CartType; Reply: CartType | ErrorType }>(
+  server.post<{ Body: CartType; Reply: CartType | ErrorType | boolean }>(
     "/",
     async (request, reply) => {
       const newCart = request.body;
+      const isValid = validateCart(newCart);
+
+      if (!isValid) {
+        return reply.status(400).send({ message: "Invalid cart" });
+      }
+
       request.session.set("cart", { items: newCart });
       reply.status(200).send(newCart);
     }
