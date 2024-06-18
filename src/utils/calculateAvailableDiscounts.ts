@@ -7,6 +7,7 @@ export default function calculateAvailableDiscounts(
   const validDiscounts = [];
 
   for (const discount of discounts) {
+    // each discountItem acts as a condition for the cart to fulfill
     const isValid = discount.items.every((item) => {
       const quantity = priceQuantities.get(item.priceId);
       if (!quantity) return false;
