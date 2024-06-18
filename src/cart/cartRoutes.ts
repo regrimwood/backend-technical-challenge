@@ -5,6 +5,7 @@ import { ErrorType } from "../utils/types/errorType";
 import { getDiscountsByPriceIds } from "./cartRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
 import { DiscountType } from "../utils/types/discountType";
+import getCartQuantities from "../utils/getCartQuantities";
 
 const ajv = new Ajv();
 
@@ -15,7 +16,7 @@ export default async function cartRoutes(server: FastifyInstance) {
   server.get<{ Reply: CartType }>("/", async (request, reply) => {
     const cart = request.session.get("cart");
     if (!cart) {
-      return reply.status(200).send({ items: [] });
+      return reply.status(200).send({ items: [], discountId: null });
     }
     reply.status(200).send(cart);
   });
@@ -29,6 +30,28 @@ export default async function cartRoutes(server: FastifyInstance) {
 
       if (!isValid) {
         return reply.status(400).send({ message: "Invalid cart" });
+      }
+
+      if (newCart.discountId) {
+        const discounts = await getDiscountsByPriceIds(
+          newCart.items.map((item) => item.priceId),
+          server
+        );
+
+        if ("error" in discounts || !discounts) {
+          return reply.status(500).send({ message: discounts.error });
+        }
+
+        const validDiscounts = calculateAvailableDiscounts(
+          getCartQuantities(newCart),
+          discounts
+        );
+
+        if (
+          !validDiscounts.find((discount) => discount.id === newCart.discountId)
+        ) {
+          newCart.discountId = null;
+        }
       }
 
       request.session.set("cart", newCart);
@@ -46,16 +69,7 @@ export default async function cartRoutes(server: FastifyInstance) {
         return reply.status(200).send([]);
       }
 
-      const priceQuantities = new Map<number, number>();
-
-      cart.items.forEach((item) => {
-        const existingQuantity = priceQuantities.get(item.priceId);
-        if (existingQuantity) {
-          priceQuantities.set(item.priceId, existingQuantity + item.quantity);
-        } else {
-          priceQuantities.set(item.priceId, item.quantity);
-        }
-      });
+      const priceQuantities = getCartQuantities(cart);
 
       const priceIds = Array.from(priceQuantities.keys());
 

@@ -2,6 +2,7 @@ import "dotenv/config";
 import fs from "fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import Ajv from "ajv";
 import Fastify from "fastify";
 import secureSession from "@fastify/secure-session";
 import dbConnect from "./db";
@@ -21,6 +22,10 @@ const server = Fastify().withTypeProvider<TypeBoxTypeProvider>();
 
 dbConnect(server);
 
+server.decorate("ajv", () => {
+  return new Ajv();
+});
+
 server.register(secureSession, {
   sessionName: "session",
   cookieName: "session-cookie",
@@ -34,7 +39,7 @@ server.addHook("preHandler", async (request, reply) => {
   const cart = request.session.get("cart");
 
   if (!cart) {
-    request.session.set("cart", { items: [] });
+    request.session.set("cart", { items: [], discountId: null });
   }
 });
 

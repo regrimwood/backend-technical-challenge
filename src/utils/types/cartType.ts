@@ -8,7 +8,7 @@ export const Cart = Type.Object({
       quantity: Type.Number(),
     })
   ),
-  discountId: Type.Optional(Type.Number()),
+  discountId: Type.Union([Type.Number(), Type.Null()]),
 });
 
 export type CartType = Static<typeof Cart>;
