@@ -6,7 +6,7 @@ import { getDiscountsByPriceIds } from "../discounts/discountsRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
 import { DiscountsType } from "../utils/types/DiscountType";
 import getCartQuantities from "../utils/getCartQuantities";
-import { calculateTotal, getPrice } from "../prices/pricesRepository";
+import { calculateTotal } from "../prices/pricesRepository";
 
 const ajv = new Ajv();
 
