@@ -22,7 +22,7 @@ export const getPrice = async (priceId: number, server: FastifyInstance) => {
 
     return res.recordset[0] as PriceType;
   } catch (err: any) {
-    return { error: err?.message ?? "An error occurred" };
+    throw new Error(err?.message ?? "An error occurred");
   }
 };
 
@@ -33,11 +33,12 @@ export const calculateTotal = async (
   let total = 0;
 
   for (const item of cart.items) {
-    const price = await getPrice(item.priceId, server);
-    if ("error" in price || !price) {
-      throw new Error(price.error);
+    try {
+      const price = await getPrice(item.priceId, server);
+      total += price.price * item.quantity;
+    } catch (err: any) {
+      throw new Error(err?.message ?? "An error occurred");
     }
-    total += price.price * item.quantity;
   }
 
   return total;
