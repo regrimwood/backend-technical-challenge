@@ -1,10 +1,10 @@
 import { FastifyInstance } from "fastify";
-import addFormats from "ajv-formats";
 import Ajv from "ajv";
 import { Cart, CartType } from "../utils/types/cartType";
 import { ErrorType } from "../utils/types/errorType";
 import { getDiscountsByPriceIds } from "./cartRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
+import { DiscountType } from "../utils/types/discountType";
 
 const ajv = new Ajv();
 
@@ -21,7 +21,7 @@ export default async function cartRoutes(server: FastifyInstance) {
   });
 
   // edit the cart
-  server.post<{ Body: CartType; Reply: CartType | ErrorType | boolean }>(
+  server.post<{ Body: CartType; Reply: CartType | ErrorType }>(
     "/",
     async (request, reply) => {
       const newCart = request.body;
@@ -37,37 +37,40 @@ export default async function cartRoutes(server: FastifyInstance) {
   );
 
   // get valid discounts
-  server.get("/available-discounts", async (request, reply) => {
-    const cart = request.session.get("cart");
+  server.get<{ Reply: DiscountType | ErrorType }>(
+    "/available-discounts",
+    async (request, reply) => {
+      const cart = request.session.get("cart");
 
-    if (!cart) {
-      return reply.status(200).send([]);
-    }
-
-    const priceQuantities = new Map<number, number>();
-
-    cart.items.forEach((item) => {
-      const existingQuantity = priceQuantities.get(item.priceId);
-      if (existingQuantity) {
-        priceQuantities.set(item.priceId, existingQuantity + item.quantity);
-      } else {
-        priceQuantities.set(item.priceId, item.quantity);
+      if (!cart) {
+        return reply.status(200).send([]);
       }
-    });
 
-    const priceIds = Array.from(priceQuantities.keys());
+      const priceQuantities = new Map<number, number>();
 
-    const discounts = await getDiscountsByPriceIds(priceIds, server);
+      cart.items.forEach((item) => {
+        const existingQuantity = priceQuantities.get(item.priceId);
+        if (existingQuantity) {
+          priceQuantities.set(item.priceId, existingQuantity + item.quantity);
+        } else {
+          priceQuantities.set(item.priceId, item.quantity);
+        }
+      });
 
-    if ("error" in discounts || !discounts) {
-      return reply.status(500).send({ message: discounts.error });
+      const priceIds = Array.from(priceQuantities.keys());
+
+      const discounts = await getDiscountsByPriceIds(priceIds, server);
+
+      if ("error" in discounts || !discounts) {
+        return reply.status(500).send({ message: discounts.error });
+      }
+
+      const validDiscounts = calculateAvailableDiscounts(
+        priceQuantities,
+        discounts
+      );
+
+      reply.status(200).send(validDiscounts);
     }
-
-    const validDiscounts = calculateAvailableDiscounts(
-      priceQuantities,
-      discounts
-    );
-
-    reply.status(200).send(validDiscounts);
-  });
+  );
 }
