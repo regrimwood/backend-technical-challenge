@@ -9,6 +9,7 @@ export const Cart = Type.Object({
     })
   ),
   discountId: Type.Union([Type.Number(), Type.Null()]),
+  total: Type.Number(),
 });
 
 export type CartType = Static<typeof Cart>;

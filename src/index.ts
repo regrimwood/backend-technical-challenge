@@ -39,7 +39,7 @@ server.addHook("preHandler", async (request, reply) => {
   const cart = request.session.get("cart");
 
   if (!cart) {
-    request.session.set("cart", { items: [], discountId: null });
+    request.session.set("cart", { items: [], discountId: null, total: 0 });
   }
 });
 

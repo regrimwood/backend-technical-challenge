@@ -16,7 +16,7 @@ export default async function cartRoutes(server: FastifyInstance) {
   server.get<{ Reply: CartType }>("/", async (request, reply) => {
     const cart = request.session.get("cart");
     if (!cart) {
-      return reply.status(200).send({ items: [], discountId: null });
+      return reply.status(200).send({ items: [], discountId: null, total: 0 });
     }
     reply.status(200).send(cart);
   });
