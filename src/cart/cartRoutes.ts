@@ -1,10 +1,10 @@
 import { FastifyInstance } from "fastify";
 import Ajv from "ajv";
-import { Cart, CartType } from "../utils/types/cartType";
-import { ErrorType } from "../utils/types/errorType";
-import { getDiscountsByPriceIds } from "./cartRepository";
+import { Cart, CartType } from "../utils/types/CartType";
+import { ErrorType } from "../utils/types/ErrorType";
+import { getDiscountsByPriceIds } from "../discounts/discountsRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
-import { DiscountType } from "../utils/types/discountType";
+import { DiscountsType } from "../utils/types/DiscountType";
 import getCartQuantities from "../utils/getCartQuantities";
 import { calculateTotal, getPrice } from "../prices/pricesRepository";
 
@@ -56,9 +56,7 @@ export default async function cartRoutes(server: FastifyInstance) {
 
         const total = await calculateTotal(newCart, server);
 
-        if (total) {
-          newCart.total = total;
-        }
+        newCart.total = total;
 
         request.session.set("cart", newCart);
         reply.status(200).send(newCart);
@@ -71,7 +69,7 @@ export default async function cartRoutes(server: FastifyInstance) {
   );
 
   // get valid discounts
-  server.get<{ Reply: DiscountType | ErrorType }>(
+  server.get<{ Reply: DiscountsType | ErrorType }>(
     "/available-discounts",
     async (request, reply) => {
       const cart = request.session.get("cart");

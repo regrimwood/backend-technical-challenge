@@ -62,4 +62,51 @@ describe("POST cart", () => {
     expect(response.status).toEqual(200);
     expect(response.body.discountId).toBeNull();
   });
+
+  it("should return correct total for a cart with percent discount", async () => {
+    const postData = {
+      items: [
+        {
+          eventId: 1,
+          priceId: 1,
+          quantity: 5,
+        },
+      ],
+      discountId: 1,
+      total: 0,
+    };
+
+    const response = await request("http://localhost:8080")
+      .post("/cart")
+      .send(postData);
+
+    expect(response.status).toEqual(200);
+    expect(response.body.total).toEqual(112.5);
+  });
+
+  it("should return correct total for a cart with fixed price discount", async () => {
+    const postData = {
+      items: [
+        {
+          eventId: 1,
+          priceId: 1,
+          quantity: 5,
+        },
+        {
+          eventId: 1,
+          priceId: 2,
+          quantity: 3,
+        },
+      ],
+      discountId: 2,
+      total: 0,
+    };
+
+    const response = await request("http://localhost:8080")
+      .post("/cart")
+      .send(postData);
+
+    expect(response.status).toEqual(200);
+    expect(response.body.total).toEqual(145);
+  });
 });

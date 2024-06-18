@@ -1,4 +1,4 @@
-import { CartType } from "./types/cartType";
+import { CartType } from "./types/CartType";
 
 export default function getCartQuantities(cart: CartType) {
   const priceQuantities = new Map<number, number>();
