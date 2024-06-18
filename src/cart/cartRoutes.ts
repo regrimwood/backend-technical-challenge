@@ -6,6 +6,7 @@ import { getDiscountsByPriceIds } from "./cartRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
 import { DiscountType } from "../utils/types/discountType";
 import getCartQuantities from "../utils/getCartQuantities";
+import { calculateTotal, getPrice } from "../prices/pricesRepository";
 
 const ajv = new Ajv();
 
@@ -32,30 +33,40 @@ export default async function cartRoutes(server: FastifyInstance) {
         return reply.status(400).send({ message: "Invalid cart" });
       }
 
-      if (newCart.discountId) {
-        const discounts = await getDiscountsByPriceIds(
-          newCart.items.map((item) => item.priceId),
-          server
-        );
+      try {
+        if (newCart.discountId) {
+          const discounts = await getDiscountsByPriceIds(
+            newCart.items.map((item) => item.priceId),
+            server
+          );
 
-        if ("error" in discounts || !discounts) {
-          return reply.status(500).send({ message: discounts.error });
+          const validDiscounts = calculateAvailableDiscounts(
+            getCartQuantities(newCart),
+            discounts
+          );
+
+          if (
+            !validDiscounts.find(
+              (discount) => discount.id === newCart.discountId
+            )
+          ) {
+            newCart.discountId = null;
+          }
         }
 
-        const validDiscounts = calculateAvailableDiscounts(
-          getCartQuantities(newCart),
-          discounts
-        );
+        const total = await calculateTotal(newCart, server);
 
-        if (
-          !validDiscounts.find((discount) => discount.id === newCart.discountId)
-        ) {
-          newCart.discountId = null;
+        if (total) {
+          newCart.total = total;
         }
+
+        request.session.set("cart", newCart);
+        reply.status(200).send(newCart);
+      } catch (err: any) {
+        return reply
+          .status(500)
+          .send({ message: err?.message ?? "An error occurred" });
       }
-
-      request.session.set("cart", newCart);
-      reply.status(200).send(newCart);
     }
   );
 
@@ -69,22 +80,24 @@ export default async function cartRoutes(server: FastifyInstance) {
         return reply.status(200).send([]);
       }
 
-      const priceQuantities = getCartQuantities(cart);
+      try {
+        const priceQuantities = getCartQuantities(cart);
 
-      const priceIds = Array.from(priceQuantities.keys());
+        const priceIds = Array.from(priceQuantities.keys());
 
-      const discounts = await getDiscountsByPriceIds(priceIds, server);
+        const discounts = await getDiscountsByPriceIds(priceIds, server);
 
-      if ("error" in discounts || !discounts) {
-        return reply.status(500).send({ message: discounts.error });
+        const validDiscounts = calculateAvailableDiscounts(
+          priceQuantities,
+          discounts
+        );
+
+        reply.status(200).send(validDiscounts);
+      } catch (err: any) {
+        return reply
+          .status(500)
+          .send({ message: err?.message ?? "An error occurred" });
       }
-
-      const validDiscounts = calculateAvailableDiscounts(
-        priceQuantities,
-        discounts
-      );
-
-      reply.status(200).send(validDiscounts);
     }
   );
 }

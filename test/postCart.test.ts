@@ -11,7 +11,7 @@ describe("POST cart", () => {
         },
       ],
       discountId: null,
-      total: 100,
+      total: 25,
     };
 
     const response = await request("http://localhost:8080")

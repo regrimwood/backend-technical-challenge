@@ -65,6 +65,6 @@ export const getDiscountsByPriceIds = async (
 
     return discounts;
   } catch (err: any) {
-    return { error: err?.message ?? "An error occurred" };
+    throw new Error(err?.message ?? "An error occurred");
   }
 };
