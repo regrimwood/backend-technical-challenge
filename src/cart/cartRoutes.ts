@@ -1,27 +1,14 @@
 import { FastifyInstance } from "fastify";
-import addFormats from "ajv-formats";
 import Ajv from "ajv";
-import { Cart, CartType } from "../utils/types/cartType";
-import { ErrorType } from "../utils/types/errorType";
-import { getDiscountsByPriceIds } from "./cartRepository";
+import { Cart, CartType } from "../utils/types/CartType";
+import { ErrorType } from "../utils/types/ErrorType";
+import { getDiscountsByPriceIds } from "../discounts/discountsRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
+import { DiscountsType } from "../utils/types/DiscountType";
+import getCartQuantities from "../utils/getCartQuantities";
+import { calculateTotal } from "../prices/pricesRepository";
 
-const ajv = addFormats(new Ajv({}), [
-  "date-time",
-  "time",
-  "date",
-  "email",
-  "hostname",
-  "ipv4",
-  "ipv6",
-  "uri",
-  "uri-reference",
-  "uuid",
-  "uri-template",
-  "json-pointer",
-  "relative-json-pointer",
-  "regex",
-]);
+const ajv = new Ajv();
 
 const validateCart = ajv.compile(Cart);
 
@@ -30,13 +17,13 @@ export default async function cartRoutes(server: FastifyInstance) {
   server.get<{ Reply: CartType }>("/", async (request, reply) => {
     const cart = request.session.get("cart");
     if (!cart) {
-      return reply.status(200).send([]);
+      return reply.status(200).send({ items: [], discountId: null, total: 0 });
     }
-    reply.status(200).send(cart.items);
+    reply.status(200).send(cart);
   });
 
   // edit the cart
-  server.post<{ Body: CartType; Reply: CartType | ErrorType | boolean }>(
+  server.post<{ Body: CartType; Reply: CartType | ErrorType }>(
     "/",
     async (request, reply) => {
       const newCart = request.body;
@@ -46,43 +33,69 @@ export default async function cartRoutes(server: FastifyInstance) {
         return reply.status(400).send({ message: "Invalid cart" });
       }
 
-      request.session.set("cart", { items: newCart });
-      reply.status(200).send(newCart);
+      try {
+        if (newCart.discountId) {
+          const discounts = await getDiscountsByPriceIds(
+            newCart.items.map((item) => item.priceId),
+            server
+          );
+
+          const validDiscounts = calculateAvailableDiscounts(
+            getCartQuantities(newCart),
+            discounts
+          );
+
+          if (
+            !validDiscounts.find(
+              (discount) => discount.id === newCart.discountId
+            )
+          ) {
+            newCart.discountId = null;
+          }
+        }
+
+        const total = await calculateTotal(newCart, server);
+
+        newCart.total = total;
+
+        request.session.set("cart", newCart);
+        reply.status(200).send(newCart);
+      } catch (err: any) {
+        return reply
+          .status(500)
+          .send({ message: err?.message ?? "An error occurred" });
+      }
     }
   );
 
   // get valid discounts
-  server.get("/available-discounts", async (request, reply) => {
-    const cart = request.session.get("cart");
+  server.get<{ Reply: DiscountsType | ErrorType }>(
+    "/available-discounts",
+    async (request, reply) => {
+      const cart = request.session.get("cart");
 
-    if (!cart) {
-      return reply.status(200).send([]);
-    }
-
-    const priceQuantities = new Map<number, number>();
-
-    cart.items.forEach((item) => {
-      const existingQuantity = priceQuantities.get(item.priceId);
-      if (existingQuantity) {
-        priceQuantities.set(item.priceId, existingQuantity + item.quantity);
-      } else {
-        priceQuantities.set(item.priceId, item.quantity);
+      if (!cart) {
+        return reply.status(200).send([]);
       }
-    });
 
-    const priceIds = Array.from(priceQuantities.keys());
+      try {
+        const priceQuantities = getCartQuantities(cart);
 
-    const discounts = await getDiscountsByPriceIds(priceIds, server);
+        const priceIds = Array.from(priceQuantities.keys());
 
-    if ("error" in discounts || !discounts) {
-      return reply.status(500).send({ message: discounts.error });
+        const discounts = await getDiscountsByPriceIds(priceIds, server);
+
+        const validDiscounts = calculateAvailableDiscounts(
+          priceQuantities,
+          discounts
+        );
+
+        reply.status(200).send(validDiscounts);
+      } catch (err: any) {
+        return reply
+          .status(500)
+          .send({ message: err?.message ?? "An error occurred" });
+      }
     }
-
-    const validDiscounts = calculateAvailableDiscounts(
-      priceQuantities,
-      discounts
-    );
-
-    reply.status(200).send(validDiscounts);
-  });
+  );
 }

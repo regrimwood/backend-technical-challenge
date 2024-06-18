@@ -1,5 +1,5 @@
 import calculateAvailableDiscounts from "../src/utils/calculateAvailableDiscounts";
-import { DiscountType } from "../src/utils/types/discountType";
+import { DiscountsType } from "../src/utils/types/DiscountType";
 
 describe("calculateAvailableDiscounts", () => {
   it("should return valid discounts", () => {
@@ -9,7 +9,7 @@ describe("calculateAvailableDiscounts", () => {
       [3, 15],
     ]);
 
-    const discounts: DiscountType = [
+    const discounts: DiscountsType = [
       {
         id: 1,
         name: "Discount 1",
@@ -74,7 +74,7 @@ describe("calculateAvailableDiscounts", () => {
       },
     ];
 
-    const expectedDiscounts: DiscountType = [
+    const expectedDiscounts: DiscountsType = [
       {
         id: 1,
         name: "Discount 1",

@@ -1,8 +1,8 @@
-import { DiscountType } from "./types/discountType";
+import { DiscountsType } from "./types/DiscountType";
 
 export default function calculateAvailableDiscounts(
   priceQuantities: Map<number, number>,
-  discounts: DiscountType
+  discounts: DiscountsType
 ) {
   const validDiscounts = [];
 
