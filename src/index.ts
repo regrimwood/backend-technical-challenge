@@ -13,9 +13,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 declare module "@fastify/secure-session" {
   interface SessionData {
-    cart: {
-      items: CartType;
-    };
+    cart: CartType;
   }
 }
 

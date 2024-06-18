@@ -6,22 +6,7 @@ import { ErrorType } from "../utils/types/errorType";
 import { getDiscountsByPriceIds } from "./cartRepository";
 import calculateAvailableDiscounts from "../utils/calculateAvailableDiscounts";
 
-const ajv = addFormats(new Ajv({}), [
-  "date-time",
-  "time",
-  "date",
-  "email",
-  "hostname",
-  "ipv4",
-  "ipv6",
-  "uri",
-  "uri-reference",
-  "uuid",
-  "uri-template",
-  "json-pointer",
-  "relative-json-pointer",
-  "regex",
-]);
+const ajv = new Ajv();
 
 const validateCart = ajv.compile(Cart);
 
@@ -30,9 +15,9 @@ export default async function cartRoutes(server: FastifyInstance) {
   server.get<{ Reply: CartType }>("/", async (request, reply) => {
     const cart = request.session.get("cart");
     if (!cart) {
-      return reply.status(200).send([]);
+      return reply.status(200).send({ items: [] });
     }
-    reply.status(200).send(cart.items);
+    reply.status(200).send(cart);
   });
 
   // edit the cart
@@ -46,7 +31,7 @@ export default async function cartRoutes(server: FastifyInstance) {
         return reply.status(400).send({ message: "Invalid cart" });
       }
 
-      request.session.set("cart", { items: newCart });
+      request.session.set("cart", newCart);
       reply.status(200).send(newCart);
     }
   );
